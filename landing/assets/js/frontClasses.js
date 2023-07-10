@@ -54,6 +54,9 @@ class stateManager {
     stateManager.getParsedRoute(newState, data.exp);
 
     let renderData = await newState._beforeRender(data);
+    if (!renderData) {
+      return false;
+    }
     renderData = await newState.beforeRender(renderData);
 
     stateManager.getParsedRoute(newState, renderData.data.exp);
@@ -157,13 +160,9 @@ class state {
       data: data
     };
 
-    if (this.onlyAuth && (!myUser || !myUser.data.token)) {
-      retData.template = "tmpl_login";
-      retData.data = {};
-      //myState.beforeLoginName = this.name;
-      //myState.beforeLoginData = data;
-
-      return retData;
+    if (this.onlyAuth && !(myUser && await myUser.checkToken())) {
+      stateManager.changeStateByState(stateManager.states["login"]);
+      return false;
     }
 
     return retData;
@@ -209,4 +208,53 @@ class state {
 
     //SingApp.hideLoader();
   }
+}
+
+class clFrontUser {
+  constructor(id, data, token) {
+    this.id = id;
+    this.fullData = data ? {...data} : {};
+    this.token = token;
+  }
+
+  restoreFromStorage() {
+    let userData = localStorage.getItem("user");
+    let token = localStorage.getItem("token");
+    if(token && userData) {
+      userData = JSON.parse(userData);
+      this.id = userData.id;
+      this.fullData = userData;
+      this.token = token;
+    }
+  }
+
+  async checkToken() {
+    if (!this.token)
+      return false;
+    const res = await asyncAPI("clUser/verifyToken", { token: this.token });
+    if (res.errorCode) {
+      this.token = null;
+      return false;
+    }
+    else {
+      if (res.id != this.id) {
+        this.token = null;
+        return false;
+      }
+    }
+    
+    return true;
+  }
+
+  async refreshToken() {
+    const res = await asyncAPI("clUser/refreshTokenLifetime", { token: this.token });
+    if (res.errorCode) {
+      this.token = null;
+      return false;
+    }
+    this.token = decodeURI(res);
+    localStorage.setItem("token", this.token);
+    return true;
+  }
+    
 }

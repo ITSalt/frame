@@ -94,13 +94,8 @@ const onStartInit = async () => {
 
   await asyncLoadTemplate("/assets/js/allTemplates.html").then(afterTemplatesLoad);
 
-  //const userData = window.SingSettings.get("user");
-
-  /*myUser = null;
-  if (userData)
-    myUser = new clUser(userData);*/
-
-  // Если нет пользователя, то на авторизацию, иначе по адресной строке определяем, какое состояние запустить
+  myUser = new clFrontUser();
+  myUser.restoreFromStorage();
 
   const myURL = window.location.pathname;
   stateManager.changeStateByRoute(myURL);

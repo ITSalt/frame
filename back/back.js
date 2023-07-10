@@ -1,3 +1,4 @@
+const bodyParser = require('body-parser');
 const restana = require('restana');
 const socketio = require('socket.io');
 const mariadb = require('mariadb');
@@ -5,6 +6,11 @@ const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
 const app = restana();
+app.use(bodyParser.json({ limit: "4000Kb" }))
+app.use(bodyParser.urlencoded({
+  extended: true,
+  limit: "4000Kb"
+}));
 const io = socketio(app.server);
 const { escape } = require('mysql2');
 
@@ -83,11 +89,13 @@ app.post('/:class/:method', async (req, res) => {
 
   // Check if the class and method exist
   if (typeof classes[className] !== 'function') {
+    console.log(`Class '${className}' not found`);
     res.send(404, `Class '${className}' not found`);
     return;
   }
 
   if (typeof classes[className][methodName] !== 'function') {
+    console.log(`Method '${methodName}' not found`);
     res.send(404, `Method '${methodName}' not found`);
     return;
   }

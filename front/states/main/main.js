@@ -1,1 +1,1 @@
-_MAIN = stateManager.addState("main", "/cabinet", false);
+_MAIN = stateManager.addState("main", "/cabinet", true);

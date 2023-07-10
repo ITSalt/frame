@@ -42,6 +42,9 @@ class stateManager {
     stateManager.getParsedRoute(newState, data.exp);
 
     let renderData = await newState._beforeRender(data);
+    if (!renderData) {
+      return false;
+    }
     renderData = await newState.beforeRender(renderData);
 
     stateManager.getParsedRoute(newState, renderData.data.exp);
@@ -145,13 +148,9 @@ class state {
       data: data
     };
 
-    if (this.onlyAuth && (!myUser || !myUser.data.token)) {
-      retData.template = "tmpl_login";
-      retData.data = {};
-      //myState.beforeLoginName = this.name;
-      //myState.beforeLoginData = data;
-
-      return retData;
+    if (this.onlyAuth && !(myUser && await myUser.checkToken())) {
+      stateManager.changeStateByState(stateManager.states["login"]);
+      return false;
     }
 
     return retData;
