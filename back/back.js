@@ -22,6 +22,7 @@ const dbName = process.env.DB_NAME || '';
 const dbUser = process.env.DB_USER || '';
 const dbPassword = process.env.DB_PASSWORD || '';
 const serverPort = process.env.SERVER_PORT || 3000;
+const tokenName = process.env.TOKEN_NAME || 'frameToken';
 
 // Connect to the MariaDB database
 const pool = mariadb.createPool({
@@ -51,14 +52,29 @@ const handleDisconnect = async () => {
 // Initial connection for the first time
 handleDisconnect();
 
-// Include all classes from the /classes folder
-const classPath = path.join(__dirname, 'classes');
-const classFiles = fs.readdirSync(classPath);
-const classes = {};
-for (const file of classFiles) {
-  const className = file.split('.')[0];
-  classes[className] = require(path.join(classPath, file));
+// Include all classes from the /classes folder and subfolders
+function loadClasses(classPath) {
+  const files = fs.readdirSync(classPath);
+
+  const classes = {};
+
+  for (const file of files) {
+    const filePath = path.join(classPath, file);
+    const isDirectory = fs.statSync(filePath).isDirectory();
+
+    if (isDirectory) {
+      Object.assign(classes, loadClasses(filePath));
+    } else if (file.endsWith('.js')) {
+      const className = path.parse(file).name;
+      classes[className] = require(filePath);
+    }
+  }
+
+  return classes;
 }
+
+const classPath = path.join(__dirname, 'classes');
+const classes = loadClasses(classPath);
 
 app.get('/:class/:method/:param', async (req, res) => {
   const className = req.params.class;
@@ -86,6 +102,18 @@ app.post('/:class/:method', async (req, res) => {
   const className = req.params.class;
   const methodName = req.params.method;
   const payload = req.body;
+  // get cookies and parse them
+  const cookies = req.headers.cookie;
+  const cookiesParsed = {};
+  if (cookies) {
+    cookies.split(';').forEach(cookie => {
+      const parts = cookie.split('=');
+      cookiesParsed[parts[0].trim()] = (parts[1] || '').trim();
+    });
+  }
+  payload.cookies = cookiesParsed;
+  if(payload.cookies[tokenName])
+    payload.token = payload.cookies[tokenName];
 
   // Check if the class and method exist
   if (typeof classes[className] !== 'function') {
@@ -102,6 +130,12 @@ app.post('/:class/:method', async (req, res) => {
 
   // Call the method with the given payload and the database connection
   const result = await classes[className][methodName](pool, payload);
+  if (result.freshToken) {
+    res.setHeader('Set-Cookie', `${tokenName}=${result.freshToken}; HttpOnly; path=/`);
+  }
+  if (result.errorCode && result.errorCode === "INVALID_TOKEN") {
+    res.setHeader('Set-Cookie', `${tokenName}=; HttpOnly; max-age=0; path=/`);
+  }
 
   res.send(result);
 });

@@ -8,5 +8,7 @@ allConverters = {
 };
 
 allHelpers = {
-  
+  "jsonToString": (jsonData) => {
+    return encodeURI(JSON.stringify(jsonData));
+  }
 };

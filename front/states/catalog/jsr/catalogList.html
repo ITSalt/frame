@@ -1,0 +1,67 @@
+<div class="card card-transparent">
+  <div class="card-header ">
+    <div class="card-title">Управление каталогом</div>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-12">
+        <h5>Группы, подгруппы и позиции</h5>
+        <div class="card card-borderless">
+          <ul class="nav nav-tabs nav-tabs-simple" role="tablist" data-init-reponsive-tabs="dropdownfx">
+            {{for groups}}
+            <li class="nav-item">
+              <a class="{{if #index === 0}}active{{/if}}" data-toggle="tab" role="tab" data-target="#groupTab{{:id}}" href="#">
+                {{:name}}
+              </a>
+            </li>
+            {{/for}}
+          </ul>
+          <div class="tab-content">
+            {{for groups}}
+              <div class="tab-pane {{if #index === 0}}active{{/if}} fade" id="groupTab{{:id}}">
+                <form role="form" id="fmEditGroup{{:id}}">
+                  <div class="row column-seperation">
+                    <div class="col-lg-6">
+                      <div class="ar-1-1">
+                        <img name="catGroupImage{{:id}}" class="img-fluid"
+                          data-src-retina="/cabinet/assets/img/{{if image}}catalog/{{:image}}{{else}}logo_s_2x.png{{/if}}"
+                          data-src="/cabinet/assets/img/{{if image}}catalog/{{:image}}{{else}}logo_s_2x.png{{/if}}"
+                          src="/cabinet/assets/img/{{if image}}catalog/{{:image}}{{else}}logo_s_2x.png{{/if}}">  
+                        >
+                        <div class="form-group form-group-default">
+                          <label>Изображение</label>
+                          <input name="catGroupImageFile{{:id}}" type="file" id="catGroupImageFile{{:id}}" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-lg-6">
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="form-group form-group-default">
+                            <label>Название группы</label>
+                            <input name="catGroupName{{:id}}" type="text" class="form-control" placeholder="Лучше не супердлинное"
+                              value="{{:name}}">
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <div class="col-sm-12">
+                          <div class="form-group form-group-default">
+                            <label>Описание\комментарий</label>
+                            <input name="catGroupDesc{{:id}}" type="text" class="form-control" placeholder="Чтобы понятно было"
+                              value="{{:description}}">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            {{/for}}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

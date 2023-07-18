@@ -1,6 +1,12 @@
 {
   "devDependencies": {
     "gulp": "^4.0.2",
-    "gulp-concat": "^2.6.1"
+    "gulp-concat": "^2.6.1",
+    "gulp-htmlmin": "^5.0.1",
+    "gulp-transform": "^3.0.5",
+    "through2": "^4.0.2"
+  },
+  "dependencies": {
+    "blueimp-md5": "^2.19.0"
   }
 }

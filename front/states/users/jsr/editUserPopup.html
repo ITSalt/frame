@@ -1,0 +1,77 @@
+<div class="modal fade fill-in" id="editUserPopup" tabindex="-1" role="dialog" aria-labelledby="editUserPopup"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header clearfix ">
+        <button aria-label="" type="button" class="close" data-dismiss="modal" aria-hidden="true"><i
+            class="pg-icon">close</i>
+        </button>
+        <h4 class="p-b-5">Добавить или изменить юзверя</h4>
+      </div>
+      <div class="modal-body">
+        <p class="small-text">Заполните все обязательные поля формы</p>
+        <form role="form">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="form-group form-group-default required">
+                <label>Имя</label>
+                <input name="fName" type="text" class="form-control" placeholder="Как зовут?" value="{{:fName}}" required>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-group form-group-default required">
+                <label>Фамилия</label>
+                <input name="lName" type="text" class="form-control" placeholder="Какая фамилия?" value="{{:lName}}" required>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-12">
+              <div class="form-group form-group-default">
+                <label>Отчество</label>
+                <input name="lName" type="text" class="form-control" placeholder="Есть отчество - пиши!" value="{{:mName}}">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="form-group form-group-default required">
+                <label>EMail</label>
+                <input id="email" type="text" class="form-control" placeholder="Что-то про собаку" required value="{{:email}}">
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-group form-group-default">
+                <label>Телефон</label>
+                <input id="phone" type="text" class="form-control" placeholder="+7 и дальше" value="{{:phone}}">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-sm-4">
+                <div class="thumbnail-wrapper d48 circular bordered b-white">
+                  <img alt="Avatar" width="55" height="55" id="avatarPreview"
+                    data-src-retina="assets/img/{{if avatar}}profiles/{{:avatar}}{{else}}logo_s_2x.png{{/if}}"
+                    data-src="assets/img/{{if avatar}}profiles/{{:avatar}}{{else}}logo_s_2x.png{{/if}}"
+                    src="assets/img/{{if avatar}}profiles/{{:avatar}}{{else}}logo_s_2x.png{{/if}}">
+                </div>
+              </div>
+              <div class="col-sm-8">
+                <div class="form-group form-group-default">
+                  <label>Аватарка</label>
+                  <input name="avatar" type="file" id="avatarLoader" />
+                </div>
+              
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button aria-label="" id="btnSaveUser" type="button" class="btn btn-primary  btn-cons">{{if id}}Изменить{{else}}Добавить{{/if}}</button>
+        <button aria-label="" type="button" class="btn btn-cons" data-dismiss="modal">Отменить</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>

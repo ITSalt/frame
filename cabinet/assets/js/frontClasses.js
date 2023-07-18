@@ -8,8 +8,22 @@ allConverters = {
 };
 
 allHelpers = {
-  
+  "jsonToString": (jsonData) => {
+    return encodeURI(JSON.stringify(jsonData));
+  }
 };
+const renderManager = {
+  parentTemplate : {
+    element: "",
+    name: "",
+  },
+  element: "",
+  template: "",
+  renderData: {}
+};
+
+const popupTemplates= [];
+
 class stateManager {
   static states = {};
   
@@ -38,6 +52,7 @@ class stateManager {
           const routeArr = route.split("/");
           for (const [oneExp, expIndex] of Object.entries(newState.expIndex)) {
             newState.exp[oneExp.substring(1)] = routeArr[expIndex];
+            data.exp[oneExp.substring(1)] = routeArr[expIndex];
           }
         }
         break;
@@ -59,22 +74,40 @@ class stateManager {
     }
     renderData = await newState.beforeRender(renderData);
 
-    stateManager.getParsedRoute(newState, renderData.data.exp);
+    stateManager.getParsedRoute(newState, renderData.renderData.exp);
 
     if ($.render[renderData.template]) {
-      const element = $$(`#${renderData.element}`);
+      let element = $$(`#${renderData.element}`);
+      if(!element) {
+        const parentElement = $$(`#${renderData.parentTemplate.element}`);
+        if (parentElement) {
+          parentElement.innerHTML = $.render[renderData.parentTemplate.name](renderData.renderData);
+          element = $$(`#${renderData.element}`);
+        } else {
+          console.error("TMPL ERR: Cannot find parent element %s for template %s", renderData.parentTemplate.element, renderData.parentTemplate.name);
+        }
+      }
+
       if (element) {
-        element.innerHTML = $.render[renderData.template](renderData.data);
+        element.innerHTML = $.render[renderData.template](renderData.renderData);
       } else {
-        console.error("TMPL ERR: Cannot find ", renderData.template);
+        console.error("TMPL ERR: Cannot find element %s for template %s", renderData.element, renderData.template);
       }
     }
 
-    await newState.afterRender(renderData.data);
-    await newState._afterRender(renderData.data);
+    // render all modals from popupTemplates array and add render html to #allModals
+    let allModalsHTML = "";
+    for (let i = 0; i < popupTemplates.length; i++) {
+      allModalsHTML += $.render[`tmpl_${popupTemplates[i]}`]({});
+    }
+    if ($$("#allModals")) 
+      $$("#allModals").innerHTML = allModalsHTML;
+
+    await newState.afterRender(renderData.renderData);
+    await newState._afterRender(renderData.renderData);
 
     const url = `${stateManager.states[newState.name].parsedRoute}${data.exp.urlPostfix ? `/#${data.exp.urlPostfix}` : ""}`;
-    window.history.pushState(renderData.data, newState.name, url);
+    window.history.pushState(renderData.renderData, newState.name, url);
 
     if (data.exp.urlPostfix && document.getElementById(data.exp.urlPostfix)) {
       document.getElementById(data.exp.urlPostfix).scrollIntoView();
@@ -154,10 +187,10 @@ class state {
   async _beforeRender(data_in) {
     //await SingApp.showLoader();
     const data = data_in || {exp : {}};
-    let retData = {
+    let retData = {...renderManager,
       element: "main",
       template: `tmpl_${this.templateName}`,
-      data: data
+      renderData: data
     };
 
     if (this.onlyAuth && !(myUser && await myUser.checkToken())) {
@@ -182,7 +215,7 @@ class state {
           const sendData = { ...btn.dataset };
           if (btn.dataset.exp)
             sendData.exp = JSON.parse(decodeURI(btn.dataset["exp"]));
-          changeStateByState(stateManager.states[btn.dataset["action"]], sendData);
+          stateManager.changeStateByState(stateManager.states[btn.dataset["action"]], sendData);
         }
       }
 
@@ -195,6 +228,9 @@ class state {
 
     $$$("a, .btn").forEach(addMove);
     $.Pages.init();
+    searchInit();
+
+
 
     /*$(".select2").each(function () {
       $(this).select2(
@@ -210,51 +246,89 @@ class state {
   }
 }
 
+class clFrontCatGroup {
+  constructor(id, data) {
+    this.id = id;
+    this.fullData = data ? { ...data } : {};
+  }
+}
 class clFrontUser {
-  constructor(id, data, token) {
+  constructor(id, data) {
     this.id = id;
     this.fullData = data ? {...data} : {};
-    this.token = token;
   }
 
   restoreFromStorage() {
     let userData = localStorage.getItem("user");
-    let token = localStorage.getItem("token");
-    if(token && userData) {
+    if(userData) {
       userData = JSON.parse(userData);
       this.id = userData.id;
       this.fullData = userData;
-      this.token = token;
+    }
+  }
+
+  async load() {
+    const res = await asyncAPI("clUser/load", { idUser: this.id });
+    if (res.errorCode) {
+      return false;
+    }
+    else {
+      this.fullData = res.user;
+      return true;
     }
   }
 
   async checkToken() {
-    if (!this.token)
-      return false;
-    const res = await asyncAPI("clUser/verifyToken", { token: this.token });
+    
+    const res = await asyncAPI("clUser/verifyToken", {});
     if (res.errorCode) {
-      this.token = null;
       return false;
     }
     else {
       if (res.id != this.id) {
-        this.token = null;
         return false;
       }
     }
     
     return true;
   }
-
-  async refreshToken() {
-    const res = await asyncAPI("clUser/refreshTokenLifetime", { token: this.token });
+  
+  async save() {
+    
+    const res = await asyncAPI("clUser/save", { id: this.id, data: this.fullData });
     if (res.errorCode) {
-      this.token = null;
       return false;
     }
-    this.token = decodeURI(res);
-    localStorage.setItem("token", this.token);
-    return true;
+    else {
+      this.id = res.id;
+      this.fullData = res.fullData;
+      return true;
+    }
   }
-    
+}
+
+class clFrontUserList {
+  //static class for work with user list
+  userList = [];
+  startFrom = 0;
+  count = 10;
+  sort = "fName, lName";
+  
+  static async getUserList() {
+    const res = await asyncAPI("clUserList/getUserList", { startFrom: this.startFrom, count: this.count, sort: this.sort});
+  
+    if (res.errorCode) {
+      return false;
+    }
+  
+    this.userList = res.rows.map(row => new clFrontUser(row.id, row));
+  
+    return this.userList;
+  }
+
+  static async getUser(id) {
+    // get user from array this.userList
+    const user = this.userList.find(user => user.id == id);
+    return user?user:false;
+  }
 }

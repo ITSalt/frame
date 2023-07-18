@@ -1,0 +1,92 @@
+<div class="row">
+  <div class="col-12">
+    <div class="card card-default">
+      <div class="card-header ">
+        <div class="card-title">
+          Управление пользователями
+        </div>
+      </div>
+      <div class="card-body">
+        <h4>Добавление и редактирование юзверей</h4>
+        <p class="m-t-10 m-b-20 mw-80">Заполните все обязательные поля формы</p>
+        <form role="form" id="fmUserEdit">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="form-group form-group-default required">
+                <label>Имя</label>
+                <input name="fName" type="text" class="form-control" placeholder="Как зовут?" value="{{:user.fName}}" required>
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-group form-group-default required">
+                <label>Фамилия</label>
+                <input name="lName" type="text" class="form-control" placeholder="Какая фамилия?" value="{{:user.lName}}" required>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-12">
+              <div class="form-group form-group-default">
+                <label>Отчество</label>
+                <input name="mName" type="text" class="form-control" placeholder="Есть отчество - пиши!" value="{{:user.mName}}">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="form-group form-group-default required">
+                <label>EMail</label>
+                <input id="email" name="email" type="text" class="form-control" placeholder="Что-то про собаку" required value="{{:user.email}}">
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-group form-group-default">
+                <label>Телефон</label>
+                <input id="phone" type="text" class="form-control" placeholder="+7 и дальше" value="{{:user.phone}}" name="phone">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="form-group form-group-default required">
+                <label>Пароль</label>
+                <input id="passwd" type="password" class="form-control" name="passwd"
+                  placeholder="{{if !user.isNew}}Оставь пустым, если не надо менять{{else}}Что-нибудь посложнее{{/if}}" 
+                  {{if user.isNew}}required{{/if}}
+                >
+              </div>
+            </div>
+            <div class="col-sm-6">
+              <div class="form-group form-group-default">
+                <label>Повтор пароля</label>
+                <input id="passwdRepeat" name="passwdRepeat" type="password" class="form-control" placeholder="Еще раз для проверки">
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-sm-4">
+              <div class="thumbnail-wrapper d48 circular bordered b-white">
+                <img alt="Avatar" width="55" height="55" id="avatarPreview"
+                  data-src-retina="/cabinet/assets/img/{{if user.avatar}}profiles/{{:user.avatar}}{{else}}logo_s_2x.png{{/if}}"
+                  data-src="/cabinet/assets/img/{{if user.avatar}}profiles/{{:user.avatar}}{{else}}logo_s_2x.png{{/if}}"
+                  src="/cabinet/assets/img/{{if user.avatar}}profiles/{{:user.avatar}}{{else}}logo_s_2x.png{{/if}}">
+              </div>
+            </div>
+            <div class="col-sm-8">
+              <div class="form-group form-group-default">
+                <label>Аватарка</label>
+                <input name="avatar" type="file" id="avatarLoader" />
+              </div>
+      
+            </div>
+          </div>
+        </form>
+        <div class="padding-20 sm-padding-5 sm-m-b-20 sm-m-t-20 align-items-right">
+          <button aria-label="" id="btnSaveUser" type="button"
+            class="btn btn-primary  btn-cons">{{if user.isNew}}Добавить{{else}}Изменить{{/if}}</button>
+          <button aria-label="" type="button" class="btn btn-cons" data-dismiss="modal">Отменить</button>
+        </div>
+      </div> 
+    </div>
+  </div>
+</div>

@@ -51,6 +51,11 @@ function asyncAPI(url, payload) {
         }
       },
       success: function (data) {
+        /*if (data.freshToken && myUser.token) {
+          myUser.token = decodeURI(data.freshToken);
+          localStorage.setItem("token", myUser.token);
+        }*/
+
         resolve(data) // Resolve promise and when success
       }
     });
@@ -68,8 +73,6 @@ const afterTemplatesLoad = (allTmpl) => {
   $.views.converters(allConverters);
   $.views.helpers(allHelpers);
 
-  // Добавляем контейнеры модальных окон
-  //$$("#allModals").innerHTML = $.render["tmpl_modalHandMercSelect"]() + $.render["tmpl_modalCalc"]();
 }
 
 const onStartInit = async () => {
@@ -92,7 +95,7 @@ const onStartInit = async () => {
     });
   }*/
 
-  await asyncLoadTemplate("/assets/js/allTemplates.html").then(afterTemplatesLoad);
+  await asyncLoadTemplate("/cabinet/assets/js/allTemplates.html").then(afterTemplatesLoad);
 
   myUser = new clFrontUser();
   myUser.restoreFromStorage();
