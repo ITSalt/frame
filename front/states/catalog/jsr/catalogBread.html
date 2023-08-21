@@ -1,0 +1,20 @@
+<ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="#" data-action="catalogList">Корень</a></li>
+  {{for parentList}}
+    <li 
+      class="breadcrumb-item {{if #index === (#root.data.parentList.length - 1)}}active{{/if}}"
+    >
+      {{if #index === (#root.data.parentList.length - 1)}}
+        {{:name}}
+      {{else}}
+        <a href="#" 
+          data-action="catalogList" 
+          data-exp="{{:~jsonToString({'idParentCatGroup' : id})}}"
+        >
+          {{:name}}
+        </a>
+      {{/if}}
+      
+    </li>
+  {{/for}}
+</ol>

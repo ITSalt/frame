@@ -105,4 +105,49 @@ const onStartInit = async () => {
 
 }
 
+
+function imageLoader(idPreview, idFile, callBack, maxSize = 800) {
+  const preview = $$(idPreview);
+  const file = $$(idFile).files[0];
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => {
+    const img = new Image();
+    img.src = reader.result;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      let width = img.width;
+      let height = img.height;
+      if (width > height) {
+        if (width > maxSize) {
+          height *= maxSize / width;
+          width = maxSize;
+        }
+      } else {
+        if (height > maxSize) {
+          width *= maxSize / height;
+          height = maxSize;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(img, 0, 0, width, height);
+      preview.src = canvas.toDataURL();
+      callBack(JSON.stringify(canvas.toDataURL()));
+    };
+  };
+}
+
+function showNotify(message, type = "success", title = "Успешно") {
+  $('.page-content-wrapper').pgNotification({
+    style: 'circle',
+    title: title,
+    message: message,
+    timeout: 3000,
+    type: type,
+    thumbnail: '<img width="40" height="40" style="display: inline-block;" src="/cabinet/assets/img/profiles/avatar2x.jpg" data-src="/cabinet/assets/img/profiles/avatar.jpg" data-src-retina="/cabinet/assets/img/profiles/avatar2x.jpg" alt="">'
+  }).show();
+}
+
 document.addEventListener("DOMContentLoaded", onStartInit);

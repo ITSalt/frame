@@ -1,0 +1,41 @@
+<div class="card card-transparent">
+  <div class="card-header ">
+    <div class="card-title">Склад</div>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-12">
+        <div class="card-deck">
+          {{for warehouse}}
+          
+            <div class="card card-default border-primary">
+              <img class="card-image-top inherit-size"
+                data-src-retina="/cabinet/assets/img/{{if fullData.itemImage}}catalog/{{:fullData.itemImage}}{{else}}logo_blue_2x.png{{/if}}"
+                data-src="/cabinet/assets/img/{{if fullData.itemImage}}catalog/{{:fullData.itemImage}}{{else}}logo_blue_2x.png{{/if}}"
+                src="/cabinet/assets/img/{{if fullData.itemImage}}catalog/{{:fullData.itemImage}}{{else}}logo_blue_2x.png{{/if}}"
+                alt="{{:fullData.itemName}}">
+              <div class="card-body">
+                <h5 class="card-title">{{:fullData.itemName}}</h5>
+                <form name="fmWH{{:id}}" role="form">
+                  <div class="form-group form-group-default required">
+                    <label>Количество на складе</label>
+                    <input type="text" data-a-dec="." data-a-sep=" " class="autonumeric form-control" name="quant{{:id}}" value="{{:fullData.quantity}}">
+                  </div>
+                </form>
+                <div class="card-controls">
+                  <button class="btn btn-warning" name="btnDelWH" data-id="{{:id}}">
+                    Удалить
+                  </button>
+                  <button class="btn btn-primary" name="btnSaveWH" data-id="{{:id}}" >
+                    Сохранить
+                  </button>  
+                </div>
+              </div>
+            </div>
+          
+          {{/for}}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

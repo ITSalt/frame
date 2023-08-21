@@ -1,4 +1,4 @@
-_CTL = stateManager.addState("catalogList", "/cabinet/catalogList", true);
+_CTL = stateManager.addState("catalogList", "/cabinet/catalogList/:idParentCatGroup", true);
 
 _CTL.beforeRender = async (data_in) => {
   data_in.parentTemplate = {
@@ -6,11 +6,143 @@ _CTL.beforeRender = async (data_in) => {
     name: "tmpl_main"
   };
   data_in.element = "mainContent";
-  /*_CTL.catalogList = new clFrontCatalogList();
-  await _CTL.catalogList.load();
-  data_in.renderData.catalogList = _CTL.catalogList.fullData;*/
+
+  data_in.renderData.catalogList = await clFrontCatGroupList.load(data_in.renderData.exp.idParentCatGroup);
+  data_in.renderData.catalogList.push(new clFrontCatGroup("new", {id: "new", name: "Новая группа", description: "", image: "", idParent: data_in.renderData.exp.idParentCatGroup || null }));
+  data_in.renderData.parentGroup = new clFrontCatGroup(data_in.renderData.exp.idParentCatGroup);
+  await data_in.renderData.parentGroup.load();
+  await data_in.renderData.parentGroup.loadParentList();
+
+  console.log(data_in.renderData.parentGroup);
 
   return data_in;
+}
+
+_CTL.events.btnSaveGroup = async (e) => {
+  const idGroup = e.target.dataset["id"];
+
+  if (_CTL.validator[idGroup].form()) {
+    const group = await clFrontCatGroupList.getGroupById(idGroup);
+    if (!group) {
+      console.error("Group not found");
+      return false;
+    }
+
+    group.fullData.name = $$(`[name=catGroupName${idGroup}]`).value;
+    group.fullData.description = $$(`[name=catGroupDesc${idGroup}]`).value;
+    
+    
+    const res = await group.save();
+    if (res.errorCode) {
+      console.error(res);
+    }
+    else {
+      stateManager.changeStateByRoute();
+      showNotify("Группа сохранена");
+    }
+  }
+}
+
+_CTL.events.btnDeleteGroup = async (e) => {
+  const idGroup = e.target.dataset["id"];
+  const group = await clFrontCatGroupList.getGroupById(idGroup);
+  if (!group) {
+    console.error("Group not found");
+    return false;
+  }
+
+  group.fullData.isDeleted = "YES";
+  const res = await group.save();
+  if (res.errorCode) {
+    console.error(res);
+  }
+  else {
+    stateManager.changeStateByRoute();
+    showNotify("Группа удалена");
+
+  }
+}
+
+
+_CTL.events.imageLoader = async (e) => {
+  const idGroup = e.target.dataset["id"];
+  const group = await clFrontCatGroupList.getGroupById(idGroup);
+  if (!group) {
+    console.error("Group not found");
+    return false;
+  }
+  imageLoader(`[name=catGroupImage${idGroup}]`, `#catGroupImageFile${idGroup}`, (data) => { group.fullData.newImage = data; });
+}
+
+_CTL.afterRender = async (data_in) => {
+
+  $$("#catBread").innerHTML = $.render["tmpl_catalogBread"](data_in.parentGroup);
+  _CTL.validator = {};
+  for(let i = 0; i < data_in.catalogList.length; i++) {
+    const idGroup = data_in.catalogList[i].id;
+    const messages = {};
+    messages[`catGroupImageFile${idGroup}`] = { required: "Без картинки грустно" };
+    messages[`catGroupName${idGroup}`] = { required: "Без название никак" };
+    messages[`catGroupDesc${idGroup}`] = { required: "Без описания грустно" };
+
+    _CTL.validator[idGroup] = $(`#fmEditGroup${idGroup}`).validate(
+      {
+        messages : messages
+      }
+    );
+
+    $$(`#catGroupImageFile${idGroup}`).addEventListener('change', _CTL.events.imageLoader, false);
+  }
+}
+_EIT = stateManager.addState("editItem", "/cabinet/catalogList/:idParentCatGroup/editItem/:idItem", true);
+
+_EIT.beforeRender = async (data_in) => {
+  data_in.parentTemplate = {
+    element: "main",
+    name: "tmpl_main"
+  };
+  data_in.element = "mainContent";
+
+  data_in.renderData.exp.idItem = data_in.renderData.exp.idItem || "new";
+
+  _EIT.item = new clFrontCatItem(data_in.renderData.exp.idItem);
+  _EIT.item.fullData.idGroup = data_in.renderData.exp.idParentCatGroup;
+  if (data_in.renderData.exp.idItem != "new")
+    await _EIT.item.load();
+  
+  data_in.renderData.item = _EIT.item;
+   
+  console.log(data_in.renderData.item);
+
+  return data_in;
+}
+
+_EIT.afterRender = async (data_in) => {
+  $$("#catItemImageFile").addEventListener('change', _EIT.events.imageLoader, false);
+  _EIT.validator = $('#fmEditItem').validate(
+    {
+      messages: {
+        catItemName: { required: "Без имени никак" }
+      }
+    }
+  );
+}
+
+_EIT.events.imageLoader = async (e) => {
+  imageLoader("#catItemImage", "#catItemImageFile", (data) => { _EIT.item.fullData.newImage = data; });
+}
+
+_EIT.events.btnSaveItem = async (e) => {
+  if (_EIT.validator.form()) {
+    _EIT.item.fullData.name = $$("[name=catItemName]").value;
+    _EIT.item.fullData.description = $$("[name=catItemDesc]").value;
+    _EIT.item.fullData.slangTags = $$("[name=catItemSlang]").value;
+    await _EIT.item.save();
+    const parentItem = new clFrontCatGroup(_EIT.item.fullData.idGroup);
+    await parentItem.load();
+    stateManager.changeStateByState("catalogList", parentItem.fullData.idParent ? { exp : {idParentCatGroup: parentItem.fullData.idParent} } : {});
+    showNotify("Товар сохранен");
+  }
 }
 _L = stateManager.addState("login", "/cabinet/login", false);
 
@@ -70,38 +202,7 @@ _UE.beforeRender = async (data_in) => {
 }
 
 _UE.events.avatarLoader = async (e) => {
-  const preview = $$("#avatarPreview");
-  const file = $$("#avatarLoader").files[0];
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => {
-    const img = new Image();
-    img.src = reader.result;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const maxSize = 800;
-      let width = img.width;
-      let height = img.height;
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
-        }
-      } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
-        }
-      }
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
-      preview.src = canvas.toDataURL();
-      _UE.currentUser.fullData.avatarData = JSON.stringify(canvas.toDataURL());
-
-    };
-  };
+  imageLoader("#avatarPreview", "#avatarLoader", (data) => { _UE.currentUser.fullData.avatarData = data; });
 }
 
 _UE.events.btnSaveUser = async (e) => {
@@ -203,3 +304,17 @@ _USL.events.btnUserSave = async (e) => {
     }
   }
 }
+_WH = stateManager.addState("warehouse", "/cabinet/warehouse", true);
+
+_WH.beforeRender = async (data_in) => {
+  data_in.parentTemplate = {
+    element: "main",
+    name: "tmpl_main"
+  };
+  data_in.element = "mainContent";
+
+  data_in.renderData.warehouse = await clFrontWarehouse.load();
+
+  return data_in;
+
+};

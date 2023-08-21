@@ -104,3 +104,6 @@ dist
 .tern-port
 
 templates/
+
+cabinet/assets/img/catalog/
+cabinet/assets/img/profiles/

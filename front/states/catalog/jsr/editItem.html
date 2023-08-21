@@ -1,0 +1,63 @@
+<div class="card card-transparent">
+  <div class="card-header ">
+    <div class="card-title">Редактирование товара</div>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-12">
+        <div id="catBread"></div>
+        <form role="form" id="fmEditItem">
+          <div class="row column-seperation">
+            <div class="col-lg-6">
+              <img name="catItemImage" id="catItemImage" class="img-fluid" height="100"
+                data-src-retina="/cabinet/assets/img/{{if item.fullData.image}}catalog/{{:item.fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                data-src="/cabinet/assets/img/{{if item.fullData.image}}catalog/{{:item.fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                src="/cabinet/assets/img/{{if item.fullData.image}}catalog/{{:item.fullData.image}}{{else}}logo_blue_2x.png{{/if}}">
+        
+              <div class="form-group form-group-default required">
+                <label>Изображение</label>
+                <input name="catItemImageFile" type="file" id="catItemImageFile" data-id="{{:id}}" />
+              </div>
+        
+            </div>
+            <div class="col-lg-6">
+              <div class="row">
+                <div class="col-12">
+                  <div class="form-group form-group-default required">
+                    <label>Название товара</label>
+                    <input name="catItemName" type="text" class="form-control" placeholder="Лучше не супердлинное"
+                      value="{{:item.fullData.name}}">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-12">
+                  <div class="form-group form-group-default required">
+                    <label>Описание\комментарий</label>
+                    <input name="catItemDesc" type="text" class="form-control" placeholder="Чтобы понятно было"
+                      value="{{:item.fullData.description}}">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-12">
+                  <div class="form-group form-group-default required">
+                    <label>Сленговое название для поиска (через запятую)</label>
+                    <input name="catItemSlang" type="text" class="form-control" placeholder="Чтобы лучше находился"
+                      value="{{:item.fullData.slangTags}}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 text-right">
+              <button name="btnDeleteItem" type="button" data-id="{{:id}}" class="btn btn-danger">Удалить</button>
+              <button name="btnSaveItem" type="button" data-id="{{:id}}" class="btn btn-success">Сохранить</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

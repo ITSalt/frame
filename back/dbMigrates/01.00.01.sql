@@ -57,3 +57,40 @@ ALTER TABLE `categoryItems`
 ADD PRIMARY KEY `id` (`id`),
 ADD INDEX `slangTags` (`slangTags`),
 ADD INDEX `isDeleted` (`isDeleted`);
+
+CREATE TABLE `warehouse` (
+  `id` varchar(50) NOT NULL,
+  `idItem` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL,
+  `quantity` decimal(10,2) NOT NULL,
+  `isDeleted` enum('YES','NO') NOT NULL DEFAULT 'NO',
+  `created` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated` datetime NOT NULL DEFAULT current_timestamp(),
+  `idLastUserOperation` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL,
+  FOREIGN KEY (`idItem`) REFERENCES `categoryItems` (`id`) ON DELETE RESTRICT,
+  FOREIGN KEY (`idLastUserOperation`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+);
+
+ALTER TABLE `Warehouse`
+ADD PRIMARY KEY `Id` (`Id`),
+ADD INDEX `IsDeleted` (`IsDeleted`),
+ADD INDEX `IdItem_isDeleted` (`IdItem`, `IsDeleted`);
+
+ALTER TABLE `warehouse`
+ADD `idOwner` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL AFTER `idItem`,
+ADD FOREIGN KEY (`idOwner`) REFERENCES `users` (`id`) ON DELETE RESTRICT;
+
+ALTER TABLE `users`
+ADD `needPwdChange` enum('YES','NO') COLLATE 'utf8mb3_general_ci' NOT NULL DEFAULT 'NO' AFTER `isDeleted`,
+CHANGE `updated` `updated` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' ON UPDATE CURRENT_TIMESTAMP AFTER `created`;
+
+ALTER TABLE `users`
+CHANGE `updated` `updated` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP AFTER `created`;
+
+ALTER TABLE `users`
+ADD `role` enum('ROOT','SELLER','BUYER') COLLATE 'utf8mb3_general_ci' NOT NULL DEFAULT 'SELLER' AFTER `avatar`,
+CHANGE `updated` `updated` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP AFTER `created`;
+
+ALTER TABLE `users`
+CHANGE `email` `email` varchar(150) COLLATE 'utf8mb3_general_ci' NULL AFTER `id`,
+CHANGE `phone` `phone` varchar(12) COLLATE 'utf8mb3_general_ci' NOT NULL AFTER `mName`,
+CHANGE `updated` `updated` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP AFTER `created`;

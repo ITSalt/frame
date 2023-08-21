@@ -24,8 +24,39 @@ class stateManager {
 
   static async changeStateByRoute(route_in = window.location.pathname, data_in = {}) {
     const data = Object.assign({}, data_in, { exp: { ...data_in.exp } });
+    
+    let newState = stateManager.states["err404"];
 
-    let route = route_in;
+    route_in = route_in.endsWith('/') ? route_in.slice(0, -1) : route_in;
+    const addressParts = route_in.split("/");
+    for (const [stateName, stateObj] of Object.entries(stateManager.states)) {
+    //for (let state of allStates) {
+      const parts = stateObj.route.split("/");
+
+      if (addressParts.length > parts.length) continue;
+
+      let matched = true;
+      let expressions = {};
+
+      for (let i = 0; i < parts.length; i++) {
+        if (parts[i].startsWith(":")) {
+          const key = parts[i].substring(1);
+          expressions[key] = i < addressParts.length ? addressParts[i] : null;
+        } else if (i >= addressParts.length || parts[i] !== addressParts[i]) {
+          matched = false;
+          break;
+        }
+      }
+
+      if (matched) {
+        newState = stateObj;
+        newState.exp = expressions;
+        data.exp = expressions;
+        return stateManager.changeStateByState(newState, data);
+      }
+    }
+
+    /*let route = route_in;
     if (route != "/" && route.slice(-1) == "/") {
       route = route.slice(0, -1);
     }
@@ -43,7 +74,7 @@ class stateManager {
         }
         break;
       }
-    }
+    }*/
 
     return stateManager.changeStateByState(newState, data);
   }
@@ -51,7 +82,11 @@ class stateManager {
   static async changeStateByState(newState, data_in) {
     const data = data_in || {};
     data.exp = data.exp || {};
-
+    
+    if (typeof newState === 'string') {
+      newState = stateManager.states[newState];
+    }
+    
     stateManager.getParsedRoute(newState, data.exp);
 
     let renderData = await newState._beforeRender(data);

@@ -132,6 +132,7 @@ app.post('/:class/:method', async (req, res) => {
   const result = await classes[className][methodName](pool, payload);
   if (result.freshToken) {
     res.setHeader('Set-Cookie', `${tokenName}=${result.freshToken}; HttpOnly; path=/`);
+    delete result.freshToken;
   }
   if (result.errorCode && result.errorCode === "INVALID_TOKEN") {
     res.setHeader('Set-Cookie', `${tokenName}=; HttpOnly; max-age=0; path=/`);

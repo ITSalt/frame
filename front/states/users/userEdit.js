@@ -14,38 +14,7 @@ _UE.beforeRender = async (data_in) => {
 }
 
 _UE.events.avatarLoader = async (e) => {
-  const preview = $$("#avatarPreview");
-  const file = $$("#avatarLoader").files[0];
-  const reader = new FileReader();
-  reader.readAsDataURL(file);
-  reader.onload = () => {
-    const img = new Image();
-    img.src = reader.result;
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const maxSize = 800;
-      let width = img.width;
-      let height = img.height;
-      if (width > height) {
-        if (width > maxSize) {
-          height *= maxSize / width;
-          width = maxSize;
-        }
-      } else {
-        if (height > maxSize) {
-          width *= maxSize / height;
-          height = maxSize;
-        }
-      }
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
-      preview.src = canvas.toDataURL();
-      _UE.currentUser.fullData.avatarData = JSON.stringify(canvas.toDataURL());
-
-    };
-  };
+  imageLoader("#avatarPreview", "#avatarLoader", (data) => { _UE.currentUser.fullData.avatarData = data; });
 }
 
 _UE.events.btnSaveUser = async (e) => {

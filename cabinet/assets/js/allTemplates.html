@@ -76,6 +76,27 @@
   <!-- END Login Right Container-->
 </div></script>
 
+<script id="tmpl_catalogBread" type="text/html"><ol class="breadcrumb">
+  <li class="breadcrumb-item"><a href="#" data-action="catalogList">Корень</a></li>
+  {{for parentList}}
+    <li 
+      class="breadcrumb-item {{if #index === (#root.data.parentList.length - 1)}}active{{/if}}"
+    >
+      {{if #index === (#root.data.parentList.length - 1)}}
+        {{:name}}
+      {{else}}
+        <a href="#" 
+          data-action="catalogList" 
+          data-exp="{{:~jsonToString({'idParentCatGroup' : id})}}"
+        >
+          {{:name}}
+        </a>
+      {{/if}}
+      
+    </li>
+  {{/for}}
+</ol></script>
+
 <script id="tmpl_catalogList" type="text/html"><div class="card card-transparent">
   <div class="card-header ">
     <div class="card-title">Управление каталогом</div>
@@ -83,62 +104,224 @@
   <div class="card-body">
     <div class="row">
       <div class="col-12">
-        <h5>Группы, подгруппы и позиции</h5>
+        <div id="catBread"></div>
+        <h5>{{:parentGroup.fullData.name}}</h5>
         <div class="card card-borderless">
           <ul class="nav nav-tabs nav-tabs-simple" role="tablist" data-init-reponsive-tabs="dropdownfx">
-            {{for groups}}
+            {{for catalogList}}
             <li class="nav-item">
               <a class="{{if #index === 0}}active{{/if}}" data-toggle="tab" role="tab" data-target="#groupTab{{:id}}" href="#">
-                {{:name}}
+                {{:fullData.name}}
               </a>
             </li>
             {{/for}}
           </ul>
           <div class="tab-content">
-            {{for groups}}
-              <div class="tab-pane {{if #index === 0}}active{{/if}} fade" id="groupTab{{:id}}">
+            {{for catalogList}}
+              <div class="tab-pane {{if #index === 0}}active{{else}}fade{{/if}}" id="groupTab{{:id}}">
                 <form role="form" id="fmEditGroup{{:id}}">
                   <div class="row column-seperation">
                     <div class="col-lg-6">
-                      <div class="ar-1-1">
-                        <img name="catGroupImage{{:id}}" class="img-fluid"
-                          data-src-retina="/cabinet/assets/img/{{if image}}catalog/{{:image}}{{else}}logo_s_2x.png{{/if}}"
-                          data-src="/cabinet/assets/img/{{if image}}catalog/{{:image}}{{else}}logo_s_2x.png{{/if}}"
-                          src="/cabinet/assets/img/{{if image}}catalog/{{:image}}{{else}}logo_s_2x.png{{/if}}">  
-                        >
-                        <div class="form-group form-group-default">
-                          <label>Изображение</label>
-                          <input name="catGroupImageFile{{:id}}" type="file" id="catGroupImageFile{{:id}}" />
-                        </div>
+                      
+                      <img name="catGroupImage{{:id}}" class="img-fluid" height="100"
+                        data-src-retina="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                        data-src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                        src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}">  
+                      
+                      <div class="form-group form-group-default required">
+                        <label>Изображение</label>
+                        <input name="catGroupImageFile{{:id}}" type="file" id="catGroupImageFile{{:id}}" data-id="{{:id}}" />
                       </div>
+                      
                     </div>
                     <div class="col-lg-6">
                       <div class="row">
                         <div class="col-12">
-                          <div class="form-group form-group-default">
+                          <div class="form-group form-group-default required">
                             <label>Название группы</label>
                             <input name="catGroupName{{:id}}" type="text" class="form-control" placeholder="Лучше не супердлинное"
-                              value="{{:name}}">
+                              value="{{:fullData.name}}">
                           </div>
                         </div>
                       </div>
                       <div class="row">
                         <div class="col-sm-12">
-                          <div class="form-group form-group-default">
+                          <div class="form-group form-group-default required">
                             <label>Описание\комментарий</label>
                             <input name="catGroupDesc{{:id}}" type="text" class="form-control" placeholder="Чтобы понятно было"
-                              value="{{:description}}">
+                              value="{{:fullData.description}}">
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                  <div class="row">
+                    <div class="col-12 text-right">
+                      <button name="btnDeleteGroup" type="button" data-id="{{:id}}" class="btn btn-danger">Удалить</button>
+                      <button name="btnSaveGroup" type="button" data-id="{{:id}}" class="btn btn-success">Сохранить</button>
+                    </div>
+                  </div>
                 </form>
+                <div class=" container-fluid container-fixed-lg m-t-20">
+                  <div class="card card-default bg-contrast-lower">
+                    <div class="card-header  separator">
+                      <div class="card-title">
+                        Подгруппы
+                      </div>
+                      <div class="card-controls">
+                        <ul>
+                          <li>
+                            <button class="btn btn-primary" data-action="catalogList" data-exp="{{:~jsonToString({'idParentCatGroup' : id})}}">Новая
+                              подгруппа</button>
+                          </li>
+                        </ul>
+                      </div>
+
+                    </div>
+
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="card-columns">
+                            {{for fullData.subGroups}}
+                            <a href="#"
+                              data-action="catalogList"
+                              data-exp="{{:~jsonToString({'idParentCatGroup' : fullData.idParent})}}"
+                            >
+                              <div class="card card-default border-primary">
+                                <img name="catGroupImage{{:id}}" class="card-image-top inherit-size"
+                                  data-src-retina="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                                  data-src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                                  src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                                  alt="{{:fullData.name}}">
+                                <div class="card-body">
+                                  <h5 class="card-title">{{:fullData.name}}</h5>
+                                  <p class="card-text">{{:fullData.description}}</p>
+                                </div>
+                              </div>
+                            </a>
+                            {{/for}}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                  </div>
+                </div>
+                <div class=" container-fluid   container-fixed-lg">
+                  <div class="card card-default bg-contrast-lower">
+                    <div class="card-header separator">
+                      <div class="card-title">Товары</div>
+                      <div class="card-controls">
+                        <ul>
+                          <li>
+                            <button class="btn btn-primary"
+                              data-action="editItem"
+                              data-exp="{{:~jsonToString({'idParentCatGroup' : id, 'idItem' : "new"})}}"
+                            >
+                              Новый товар
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="card-columns">
+                            {{for fullData.items}}
+                              <a href="#"
+                                data-action="editItem"
+                                data-exp="{{:~jsonToString({'idParentCatGroup' : fullData.idGroup, 'idItem' : id})}}"
+                              >
+                                <div class="card card-default border-primary">
+                                  <img name="catGroupImage{{:id}}" class="card-image-top inherit-size"
+                                    data-src-retina="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                                    data-src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                                    src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                                    alt="{{:fullData.name}}">
+                                  <div class="card-body">
+                                    <h5 class="card-title">{{:fullData.name}}</h5>
+                                    <p class="card-text">{{:fullData.description}}</p>
+                                  </div>
+                                </div>
+                              </a>
+                            {{/for}}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             {{/for}}
 
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div></script>
+
+<script id="tmpl_editItem" type="text/html"><div class="card card-transparent">
+  <div class="card-header ">
+    <div class="card-title">Редактирование товара</div>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-12">
+        <div id="catBread"></div>
+        <form role="form" id="fmEditItem">
+          <div class="row column-seperation">
+            <div class="col-lg-6">
+              <img name="catItemImage" id="catItemImage" class="img-fluid" height="100"
+                data-src-retina="/cabinet/assets/img/{{if item.fullData.image}}catalog/{{:item.fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                data-src="/cabinet/assets/img/{{if item.fullData.image}}catalog/{{:item.fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                src="/cabinet/assets/img/{{if item.fullData.image}}catalog/{{:item.fullData.image}}{{else}}logo_blue_2x.png{{/if}}">
+        
+              <div class="form-group form-group-default required">
+                <label>Изображение</label>
+                <input name="catItemImageFile" type="file" id="catItemImageFile" data-id="{{:id}}" />
+              </div>
+        
+            </div>
+            <div class="col-lg-6">
+              <div class="row">
+                <div class="col-12">
+                  <div class="form-group form-group-default required">
+                    <label>Название товара</label>
+                    <input name="catItemName" type="text" class="form-control" placeholder="Лучше не супердлинное"
+                      value="{{:item.fullData.name}}">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-12">
+                  <div class="form-group form-group-default required">
+                    <label>Описание\комментарий</label>
+                    <input name="catItemDesc" type="text" class="form-control" placeholder="Чтобы понятно было"
+                      value="{{:item.fullData.description}}">
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-sm-12">
+                  <div class="form-group form-group-default required">
+                    <label>Сленговое название для поиска (через запятую)</label>
+                    <input name="catItemSlang" type="text" class="form-control" placeholder="Чтобы лучше находился"
+                      value="{{:item.fullData.slangTags}}">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 text-right">
+              <button name="btnDeleteItem" type="button" data-id="{{:id}}" class="btn btn-danger">Удалить</button>
+              <button name="btnSaveItem" type="button" data-id="{{:id}}" class="btn btn-success">Сохранить</button>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -412,6 +595,12 @@
     <li class="">
       <a href="#" data-action="catalogList">
         <span class="title">Каталог</span>
+      </a>
+      <span class="icon-thumbnail "><i class="material-icons">list</i></span>
+    </li>
+    <li class="">
+      <a href="#" data-action="warehouse">
+        <span class="title">Склад</span>
       </a>
       <span class="icon-thumbnail "><i class="material-icons">list</i></span>
     </li>
@@ -923,8 +1112,8 @@
       <button class="profile-dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true"
         aria-expanded="false" aria-label="profile dropdown">
         <span class="thumbnail-wrapper d32 circular inline">
-          <img src="assets/img/profiles/avatar.jpg" alt="" data-src="assets/img/profiles/avatar.jpg"
-            data-src-retina="assets/img/profiles/avatar_small2x.jpg" width="32" height="32">
+          <img src="/cabinet/assets/img/profiles/avatar.jpg" alt="" data-src="/cabinet/assets/img/profiles/avatar.jpg"
+            data-src-retina="/cabinet/assets/img/profiles/avatar_small2x.jpg" width="32" height="32">
         </span>
       </button>
       <div class="dropdown-menu dropdown-menu-right profile-dropdown" role="menu">
@@ -1164,4 +1353,46 @@
       class="fa fa-pencil"></i></button>
   <button class="btn btn-xs btn-danger" id="btnUserDelete" data-id="{{:id}}"><i
       class="fa fa-trash"></i></button>
+</div></script>
+
+<script id="tmpl_warehouse" type="text/html"><div class="card card-transparent">
+  <div class="card-header ">
+    <div class="card-title">Склад</div>
+  </div>
+  <div class="card-body">
+    <div class="row">
+      <div class="col-12">
+        <div class="card-deck">
+          {{for warehouse}}
+          
+            <div class="card card-default border-primary">
+              <img class="card-image-top inherit-size"
+                data-src-retina="/cabinet/assets/img/{{if fullData.itemImage}}catalog/{{:fullData.itemImage}}{{else}}logo_blue_2x.png{{/if}}"
+                data-src="/cabinet/assets/img/{{if fullData.itemImage}}catalog/{{:fullData.itemImage}}{{else}}logo_blue_2x.png{{/if}}"
+                src="/cabinet/assets/img/{{if fullData.itemImage}}catalog/{{:fullData.itemImage}}{{else}}logo_blue_2x.png{{/if}}"
+                alt="{{:fullData.itemName}}">
+              <div class="card-body">
+                <h5 class="card-title">{{:fullData.itemName}}</h5>
+                <form name="fmWH{{:id}}" role="form">
+                  <div class="form-group form-group-default required">
+                    <label>Количество на складе</label>
+                    <input type="text" data-a-dec="." data-a-sep=" " class="autonumeric form-control" name="quant{{:id}}" value="{{:fullData.quantity}}">
+                  </div>
+                </form>
+                <div class="card-controls">
+                  <button class="btn btn-warning" name="btnDelWH" data-id="{{:id}}">
+                    Удалить
+                  </button>
+                  <button class="btn btn-primary" name="btnSaveWH" data-id="{{:id}}" >
+                    Сохранить
+                  </button> 
+                </div>
+              </div>
+            </div>
+          
+          {{/for}}
+        </div>
+      </div>
+    </div>
+  </div>
 </div></script>

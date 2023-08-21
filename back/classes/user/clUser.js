@@ -1,12 +1,11 @@
 const jwt = require('jsonwebtoken'); 
 const fs = require('fs').promises;
 const path = require('path');
-const { createCanvas, Image } = require('canvas');
+const { clImageSaver } = require('../clImageSaver');
 const { v4: uuidv4 } = require('uuid');
 
 const secretJWT = process.env.SECRET_JWT || 'lsdfsdhf^565$_sdkjfgsdjfgsdfg';
 const maxSize = 1024;
-const uploadDir = "cabinet/assets/img/profiles"; //path.join(__dirname, 'uploads');
 
 class clUser {
   constructor(id, data) {
@@ -161,53 +160,6 @@ class clUser {
   }
 
   static async save(pool, data) {
-    const resizeImage = (file) => {
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.src = file.buffer;
-        img.onload = () => {
-          const canvas = createCanvas(maxSize, maxSize);
-          const ctx = canvas.getContext('2d');
-          let width = img.width;
-          let height = img.height;
-
-          if (width > height) {
-            if (width > maxSize) {
-              height *= maxSize / width;
-              width = maxSize;
-            }
-          } else {
-            if (height > maxSize) {
-              width *= maxSize / height;
-              height = maxSize;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          ctx.drawImage(img, 0, 0, width, height);
-
-          resolve(canvas.toDataURL(file.mimetype, 0.8));
-        };
-
-        img.onerror = reject;
-      });
-    };
-
-    const saveFile = async (file, resizedFile) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      const filename = `${uniqueSuffix}-${file.filename}`;
-      const filepath = path.join(uploadDir, filename);
-
-      try {
-        await fs.writeFile(filepath, resizedFile);
-      } catch (error) {
-        throw error;
-      }
-
-      return { filename, filepath };
-    };
-
     //check token
     const { token } = data;
     const userData = data.data;
@@ -215,53 +167,88 @@ class clUser {
     const user = await clUser.getUserDataByToken(pool, token, true);
     if (user.errorCode)
       return { errorCode: user.errorCode }
-
-    const { id, fName, lName, email, passwd, isNew } = userData;
-  
-    if (!(id || fName || lName || email) || (isNew && !passwd)) {
+    
+    if (!userData.id || userData.id === "new") {
+      userData.id = uuidv4();
+    }
+    
+    const { phone, id } = userData;
+    
+    if (!(phone)) {
       return { errorCode: 'EMPTY_FIELDS' };
+    }
+    // check doubles by phone
+    const queryPhone = `
+      SELECT *
+      FROM users
+      WHERE phone = ? AND isDeleted = "NO" AND id != ?
+      LIMIT 0,1
+    `;
+    try {
+      const rows = await pool.query(queryPhone, [phone, id]);
+      if (rows.length) {
+        return { errorCode: 'PHONE_EXISTS' };
+      }
+    }
+    catch (err) {
+      return { errorCode: 'INTERNAL_ERROR', err };
     }
 
     //save avatar
+    const uploadDir = "cabinet/assets/img/profiles";
     if (userData.avatarData) {
-      let avatarData = userData.avatarData.split(';base64,');
-      let mime = avatarData[0].split(':')[1]; // mime type
-      let base64Image = avatarData[1];
-      let ext = mime.split('/')[1];  // extracting extension from mime type
-      let filename = uuidv4() + '.' + ext;
-
-      try {
-        await fs.writeFile(`../${uploadDir}/${filename}`, base64Image, { encoding: 'base64' });
-        //await fs.writeFile(filename, base64Image, { encoding: 'base64' });
-        userData.avatar = filename;
-      } catch (error) {
-        throw error;
-      }
-    }
+      userData.avatar = await clImageSaver.save(userData.avatarData, uploadDir);
+     }
 
     const query = `
-      INSERT INTO users (id, fName, lName, mName, email, passwd, phone, avatar, isDeleted, idLastUserOperation)
-      VALUES (?, ?, ?, ?, ?, MD5(?), ?, ?, ?, ?)
+      INSERT INTO users (id, fName, lName, mName, email, passwd, phone, avatar, isDeleted, idLastUserOperation, role, needPwdChange)
+      VALUES (?, ?, ?, ?, ?, MD5(?), ?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE 
       fName = VALUES(fname), 
       lName = VALUES(lName), 
       mName = VALUES(mName),
-      ${passwd ? "passwd = MD5(VALUES(passwd))," : ""} 
+      ${userData.passwd ? "passwd = VALUES(passwd)," : ""} 
       email = VALUES(eMail), 
       phone = VALUES(phone),
       ${userData.avatarData ? "avatar = VALUES(avatar)," : ""}
       isDeleted = VALUES(isDeleted),
-      idLastUserOperation = VALUES(idLastUserOperation)
+      idLastUserOperation = VALUES(idLastUserOperation),
+      role = VALUES(role),
+      needPwdChange = VALUES(needPwdChange)
     `;
 
     try {
-      const rows = await pool.query(query, [id, fName, lName, userData.mName, email, passwd, userData.phone, userData.avatar, userData.isDeleted ? userData.isDeleted : "NO", user.id]);
-
+      const rows = await pool.query(query, 
+        [
+          id, 
+          userData.fName || null, 
+          userData.lName || null,
+          userData.mName || null, 
+          userData.email || null, 
+          userData.passwd, 
+          userData.phone, 
+          userData.avatar || null, 
+          userData.isDeleted ? userData.isDeleted : "NO", 
+          user.id, 
+          userData.role || "SELLER", 
+          userData.needPwdChange || "NO"]);
       
       return { "id" : id, "fullData": userData, freshToken: user.token };
     } catch (err) {
       return { errorCode : "INTERNAL_ERROR", err} ;
     }
+  }
+
+  static async register(pool, data) {
+    const userData = data.data;
+    userData.id = uuidv4();
+    userData.needPwdChange = "YES";
+    userData.passwd = md5(uuidv4());
+
+    myUser = new clUser(id, userData);
+    myUser.generateToken();
+    const res = await myUser.save(pool, {token: myUser.token, data: userData});
+    return res;
   }
 }
 

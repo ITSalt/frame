@@ -38,8 +38,39 @@ class stateManager {
 
   static async changeStateByRoute(route_in = window.location.pathname, data_in = {}) {
     const data = Object.assign({}, data_in, { exp: { ...data_in.exp } });
+    
+    let newState = stateManager.states["err404"];
 
-    let route = route_in;
+    route_in = route_in.endsWith('/') ? route_in.slice(0, -1) : route_in;
+    const addressParts = route_in.split("/");
+    for (const [stateName, stateObj] of Object.entries(stateManager.states)) {
+    //for (let state of allStates) {
+      const parts = stateObj.route.split("/");
+
+      if (addressParts.length > parts.length) continue;
+
+      let matched = true;
+      let expressions = {};
+
+      for (let i = 0; i < parts.length; i++) {
+        if (parts[i].startsWith(":")) {
+          const key = parts[i].substring(1);
+          expressions[key] = i < addressParts.length ? addressParts[i] : null;
+        } else if (i >= addressParts.length || parts[i] !== addressParts[i]) {
+          matched = false;
+          break;
+        }
+      }
+
+      if (matched) {
+        newState = stateObj;
+        newState.exp = expressions;
+        data.exp = expressions;
+        return stateManager.changeStateByState(newState, data);
+      }
+    }
+
+    /*let route = route_in;
     if (route != "/" && route.slice(-1) == "/") {
       route = route.slice(0, -1);
     }
@@ -57,7 +88,7 @@ class stateManager {
         }
         break;
       }
-    }
+    }*/
 
     return stateManager.changeStateByState(newState, data);
   }
@@ -65,7 +96,11 @@ class stateManager {
   static async changeStateByState(newState, data_in) {
     const data = data_in || {};
     data.exp = data.exp || {};
-
+    
+    if (typeof newState === 'string') {
+      newState = stateManager.states[newState];
+    }
+    
     stateManager.getParsedRoute(newState, data.exp);
 
     let renderData = await newState._beforeRender(data);
@@ -250,6 +285,107 @@ class clFrontCatGroup {
   constructor(id, data) {
     this.id = id;
     this.fullData = data ? { ...data } : {};
+    this.fullData.items = (this.fullData.items && this.fullData.items.length) ? this.fullData.items.map(item => new clFrontCatItem(item.id, item)) : [];
+    this.fullData.subGroups = (this.fullData.subGroups && this.fullData.subGroups.length) ? this.fullData.subGroups.map(group => new clFrontCatGroup(group.id, group)) : [];
+  }
+
+  async save() {
+    const res = await asyncAPI("clCatGroup/save", { id: this.id, data: this.fullData });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      this.id = res.id;
+      this.fullData = res.fullData;
+      return true;
+    }
+  }
+
+  async load() {
+    const res = await asyncAPI("clCatGroup/load", { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      this.fullData = res.rows[0];
+      return true;
+    }
+  }
+
+  async loadParentList() {
+    this.parentList = [];
+
+    const res = await asyncAPI("clCatGroup/loadParentList", { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      this.parentList = res.rows.reverse();
+      return true;
+    }
+  }
+}
+
+class clFrontCatGroupList {
+  static #catGroupList = [];
+  static #startFrom = 0;
+  static #count = 50;
+  static #sort = null;
+
+  static async load(idParentCatGroup = null) {
+
+    const me = clFrontCatGroupList;
+
+    const res = await asyncAPI("clCatGroupList/load", { 
+      startFrom: me.#startFrom, 
+      count: me.#count, 
+      sort: me.#sort, 
+      idParentCatGroup});
+
+    if (res.errorCode) {
+      return false;
+    }
+
+    me.#catGroupList = res.rows.map(row => new clFrontCatGroup(row.id, row));
+
+    return me.#catGroupList;
+  }
+
+  static async getGroupById(id) {
+    return clFrontCatGroupList.#catGroupList.find(group => group.id == id);
+  }
+
+}
+class clFrontCatItem {
+  constructor(id, data) {
+    this.id = id;
+    this.fullData = data ? { ...data } : {};
+  }
+
+  async save() {
+    const res = await asyncAPI("clCatItem/save", { id: this.id, data: this.fullData });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+
+  async load() {
+    const res = await asyncAPI("clCatItem/load", { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      this.fullData = res.rows[0];
+      return true;
+    }
   }
 }
 class clFrontUser {
@@ -331,4 +467,51 @@ class clFrontUserList {
     const user = this.userList.find(user => user.id == id);
     return user?user:false;
   }
+}
+class clWHItem {
+  constructor(id, data) {
+    this.id = id;
+    this.fullData = data ? { ...data } : {};
+  }
+
+  async save() {
+    const res = await asyncAPI("clWarehouse/save", { id: this.id, data: this.fullData });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+
+  async load() {
+    const res = await asyncAPI("clWarehouse/loadOne", { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      this.fullData = res.rows[0];
+      return true;
+    }
+  }
+}
+
+class clFrontWarehouse {
+  static #whItems = [];
+
+  static async load() {
+    const me = clFrontWarehouse;
+    const res = await asyncAPI("clWarehouse/load", {});
+
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+
+    me.#whItems = res.rows.map(row => new clWHItem(row.id, row));
+    return me.#whItems;
+  }
+  
 }
