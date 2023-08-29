@@ -94,3 +94,39 @@ ALTER TABLE `users`
 CHANGE `email` `email` varchar(150) COLLATE 'utf8mb3_general_ci' NULL AFTER `id`,
 CHANGE `phone` `phone` varchar(12) COLLATE 'utf8mb3_general_ci' NOT NULL AFTER `mName`,
 CHANGE `updated` `updated` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP AFTER `created`;
+
+CREATE TABLE `orders` (
+  `id` varchar(50) NOT NULL,
+  `orderNum` varchar(50) NOT NULL,
+  `idOwner` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL,
+  `state` enum('OPEN','SENDED','BOOKED','CLOSED','DECLINED') NOT NULL DEFAULT 'OPEN',
+  `created` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE CURRENT_TIMESTAMP,
+  `idLastUserOperation` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL,
+  FOREIGN KEY (`idOwner`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+  FOREIGN KEY (`idLastUserOperation`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+);
+
+ALTER TABLE `orders`
+ADD PRIMARY KEY `id` (`id`),
+ADD UNIQUE `orderNum_created` (`orderNum`, `created`);
+
+CREATE TABLE `orderPositions` (
+  `id` varchar(50) NOT NULL,
+  `idWH` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL,
+  `idOrder` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL,
+  `orderQuantity` decimal(10,2) NOT NULL,
+  `byedQuantity` decimal(10,2) NOT NULL DEFAULT '0',
+  `created` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated` datetime NOT NULL DEFAULT current_timestamp(),
+  `idLastUserOperation` varchar(50) COLLATE 'utf8mb3_general_ci' NOT NULL,
+  FOREIGN KEY (`idWH`) REFERENCES `warehouse` (`id`) ON DELETE RESTRICT,
+  FOREIGN KEY (`idOrder`) REFERENCES `orders` (`id`) ON DELETE RESTRICT,
+  FOREIGN KEY (`idLastUserOperation`) REFERENCES `users` (`id`) ON DELETE RESTRICT
+);
+
+ALTER TABLE `orderPositions`
+ADD PRIMARY KEY `id` (`id`);
+
+ALTER TABLE `orderPositions`
+ADD UNIQUE `idOrder_idWH` (`idOrder`, `idWH`);

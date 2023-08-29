@@ -1,0 +1,44 @@
+<div class="row">
+  <div class="col-lg-12">
+    <table class="table table-hover dataTable no-footer" role="grid" id="tblGroup{{:id}}">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Наименование</th>
+          <th>Единицы измерения</th>
+          <th>Количество</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{for fullData.items}}
+          <tr>
+            <td width="15%">
+              <img class="card-image-top img-fluid lazy" width="100%"
+                data-src-retina="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                data-src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                alt="{{:fullData.name}}">
+            </td>
+            <td class="v-align-middle">{{:fullData.name}}</td>
+            <td class="v-align-middle" width="5%">{{:fullData.measureUnit}}</td>
+            <td align="center" class="v-align-middle" width="20%" style="min-width: 190px;">
+              <button class="btn btn-primary no-margin" name="btnMinus" id="btnMinus{{:id}}" data-id="{{:id}}">-</button>
+              <input type="number" data-a-dec="." data-a-sep=" " class="autonumeric no-margin" name="quant{{:id}}" style="width: 50px;"
+                value="1">
+              <button class="btn btn-primary no-margin" name="btnPlus" id="btnPlus{{:id}}" data-id="{{:id}}">+</button>
+
+              {{if #parent.root.data.warehouse[id] && #parent.root.data.warehouse[id].quantity && #parent.root.data.warehouse[id].quantity > 0}}
+                {{include ~id=id ~quantity=#parent.root.data.warehouse[id].quantity ~measureUnit=fullData.measureUnit tmpl="tmpl_swhQuantLabel" /}}                   
+              {{/if}}
+            </td>
+            <td class="v-align-middle">
+              <button class="btn btn-primary btn-sm" name="btnSaveWH" data-id="{{:id}}">Добавить на склад</button>
+            </td>
+          </tr>
+        {{/for}}
+      </tbody>
+        
+    </table>
+  </div>
+</div>

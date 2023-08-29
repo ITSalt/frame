@@ -71,6 +71,25 @@ class clFrontCatGroupList {
     return me.#catGroupList;
   }
 
+  static async loadOnlyWH(idParentCatGroup = null) {
+
+    const me = clFrontCatGroupList;
+
+    const res = await asyncAPI("clCatGroupList/loadOnlyWH", { 
+      startFrom: me.#startFrom, 
+      count: me.#count, 
+      sort: me.#sort, 
+      idParentCatGroup});
+
+    if (res.errorCode) {
+      return false;
+    }
+
+    me.#catGroupList = res.rows.map(row => new clFrontCatGroup(row.id, row));
+
+    return me.#catGroupList;
+  }
+
   static async getGroupById(id) {
     return clFrontCatGroupList.#catGroupList.find(group => group.id == id);
   }

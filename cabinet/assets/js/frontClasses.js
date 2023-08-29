@@ -113,7 +113,7 @@ class stateManager {
 
     if ($.render[renderData.template]) {
       let element = $$(`#${renderData.element}`);
-      if(!element) {
+      if (!element && renderData.parentTemplate) {
         const parentElement = $$(`#${renderData.parentTemplate.element}`);
         if (parentElement) {
           parentElement.innerHTML = $.render[renderData.parentTemplate.name](renderData.renderData);
@@ -354,6 +354,25 @@ class clFrontCatGroupList {
     return me.#catGroupList;
   }
 
+  static async loadOnlyWH(idParentCatGroup = null) {
+
+    const me = clFrontCatGroupList;
+
+    const res = await asyncAPI("clCatGroupList/loadOnlyWH", { 
+      startFrom: me.#startFrom, 
+      count: me.#count, 
+      sort: me.#sort, 
+      idParentCatGroup});
+
+    if (res.errorCode) {
+      return false;
+    }
+
+    me.#catGroupList = res.rows.map(row => new clFrontCatGroup(row.id, row));
+
+    return me.#catGroupList;
+  }
+
   static async getGroupById(id) {
     return clFrontCatGroupList.#catGroupList.find(group => group.id == id);
   }
@@ -388,6 +407,92 @@ class clFrontCatItem {
     }
   }
 }
+class clFrontOrderPosition {
+  constructor(id, data) {
+    this.id = id;
+    this.fullData = data ? { ...data } : {};
+  }
+
+  async load() {
+    const res = await asyncAPI("clOrderPosition/load", { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else { 
+      this.fullData = res.rows[0];
+      return true;
+    }
+  }
+
+  async save() {
+    const res = await asyncAPI("clOrderPosition/addToOrder", { id: this.id, data: this.fullData });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else { 
+      this.fullData = res.rows[0];
+      this.id = this.fullData.id;
+      return true;
+    }
+  }
+
+  async delete() {
+    const res = await asyncAPI("clOrderPosition/delete", { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else { 
+      this.fullData = {};
+      this.id = "new";
+      return true;
+    }
+  }
+
+}
+
+class clFrontOrder {
+  constructor(id, data) {
+    this.id = id;
+    this.fullData = data ? { ...data } : {};
+    this.fullData.positions = this.fullData.positions || [];
+  }
+
+  async load(open = false) {
+    const address = open ? "clOrder/openOrder" : "clOrder/load";
+    const res = await asyncAPI(address, { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else { 
+      this.fullData = res.rows[0];
+      this.id = this.fullData.id;
+      this.fullData.positions = this.fullData.positions.map((pos) => new clFrontOrderPosition(pos.id, pos));
+      return true;
+    }
+  }
+
+  async sendOrder() {
+    const res = await asyncAPI("clOrder/sendOrder", { id: this.id });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else { 
+      this.fullData = {};
+      this.id = "new";
+      return true;
+    }
+  }
+}
+
+class clFrontOrderList {
+  static #orders = [];
+  
+}
 class clFrontUser {
   constructor(id, data) {
     this.id = id;
@@ -399,7 +504,7 @@ class clFrontUser {
     if(userData) {
       userData = JSON.parse(userData);
       this.id = userData.id;
-      this.fullData = userData;
+      this.fullData = userData.fullData;
     }
   }
 
@@ -496,10 +601,24 @@ class clWHItem {
       return true;
     }
   }
+
+  async loadByItem(idItem) {
+    const res = await asyncAPI("clWarehouse/loadOneByItem", { idItem });
+    if (res.errorCode) {
+      console.error(res);
+      return false;
+    }
+    else {
+      this.fullData = res.rows[0];
+      this.id = this.fullData.id;
+      return true;
+    }
+  }
 }
 
 class clFrontWarehouse {
   static #whItems = [];
+  static #whItemsById = {};
 
   static async load() {
     const me = clFrontWarehouse;
@@ -511,7 +630,18 @@ class clFrontWarehouse {
     }
 
     me.#whItems = res.rows.map(row => new clWHItem(row.id, row));
-    return me.#whItems;
+    //create object by idItem and quantity in body
+    me.#whItemsById = {};
+    for(let item of me.#whItems){
+      me.#whItemsById[item.fullData.idItem] = item.fullData;
+    }
+    
+    return { "array": me.#whItems, byId: me.#whItemsById };
+  }
+
+  static getWHbyItemId(idItem) { 
+    const me = clFrontWarehouse;
+    return me.#whItemsById[idItem] || null;
   }
   
 }

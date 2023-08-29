@@ -1,0 +1,34 @@
+<!-- BEGIN List Group Header!-->
+<div class="list-view-group-header text-uppercase">
+
+</div>
+<!-- END List Group Header!-->
+<ul>
+  <!-- BEGIN List Group Item!-->
+  {{for order.positions}}
+    <li class="alert-list">
+      <!-- BEGIN Alert Item Set Animation using data-view-animation !-->
+      <a href="javascript:;" class="align-items-center" name="btnDelOrderPos" data-id="{{:fullData.id}}">
+        
+        <p class="p-l-10 overflow-ellipsis fs-12" style="white-space: normal;">
+          <span class="text-color">{{:fullData.itemName}}</span>
+        </p>
+        <p class="p-r-10 ml-auto fs-12 text-right">
+          <span class="text-color">{{:fullData.orderQuantity}}&nbsp;{{:fullData.itemMeasureUnit}}</span>
+          
+        </p>
+      </a>
+      <!-- END Alert Item!-->
+      
+    </li>
+  {{/for}}
+  <!-- END List Group Item!-->
+  
+</ul>
+{{if order.positions.length}}
+  <button class="btn btn-block btn-primary btn-cons" name="btnSendOrder">Отправить заказ</button>
+{{else}}
+  <div>
+    <p class="text-center">Заказ пуст</p>
+  </div>
+{{/if}}

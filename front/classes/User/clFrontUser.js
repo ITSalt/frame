@@ -9,7 +9,7 @@ class clFrontUser {
     if(userData) {
       userData = JSON.parse(userData);
       this.id = userData.id;
-      this.fullData = userData;
+      this.fullData = userData.fullData;
     }
   }
 

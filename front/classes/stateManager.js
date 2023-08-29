@@ -99,7 +99,7 @@ class stateManager {
 
     if ($.render[renderData.template]) {
       let element = $$(`#${renderData.element}`);
-      if(!element) {
+      if (!element && renderData.parentTemplate) {
         const parentElement = $$(`#${renderData.parentTemplate.element}`);
         if (parentElement) {
           parentElement.innerHTML = $.render[renderData.parentTemplate.name](renderData.renderData);

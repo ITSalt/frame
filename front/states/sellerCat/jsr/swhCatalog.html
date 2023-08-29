@@ -1,0 +1,41 @@
+<div class="card card-transparent">
+  <div class="card-header">
+    <div class="card-title">Выбирайте группу и добавляйте товары на склад</div>
+  </div>
+  <div class="card-body no-padding">
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="sm-m-l-5 sm-m-r-5">
+          <div class="card-group horizontal" role="tablist" aria-multiselectable="true" id="accCatalog">
+            {{for catalogList}}
+              <div class="card card-default m-b-0">
+                <div class="card-header " role="tab" id="headGroup{{:id}}">
+                  <div class="card-title">
+                    <a data-toggle="collapse" data-parent="#accCatalog" href="#group{{:id}}" aria-expanded="true"
+                      aria-controls="group{{:id}}">
+                      <div class="m-t-5 inline">
+                        <img class="card-image-top img-fluid lazy" width="100"
+                          data-src-retina="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                          data-src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                          src="/cabinet/assets/img/{{if fullData.image}}catalog/{{:fullData.image}}{{else}}logo_blue_2x.png{{/if}}"
+                          alt="{{:fullData.name}}">
+                      </div>
+                      <div class="inline m-l-10">
+                        <p>{{:fullData.name}}</p>
+                      </div>
+                    </a>
+                  </div>
+                </div>
+                <div id="group{{:id}}" class="collapse {{if #index == 0}}show{{/if}}" role="tabcard" aria-labelledby="headGroup{{:id}}">
+                  <div class="card-body">
+                    {{include tmpl="tmpl_swhCatalogItem" /}}
+                  </div>           
+                </div>
+              </div>
+            {{/for}}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

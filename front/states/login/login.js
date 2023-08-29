@@ -11,7 +11,20 @@ _L.events.btnSignIn = async (event) => {
     if (res.user) {
       localStorage.setItem("user", JSON.stringify(res.user));
       myUser.restoreFromStorage();
-      stateManager.changeStateByState(_MAIN);
+      switch(myUser.fullData.role) {
+        case "ROOT":
+          stateManager.changeStateByState("main");
+          break;
+        case "SELLER":
+          stateManager.changeStateByState("sellerCat");
+          break;
+        case "BUYER":
+          //stateManager.changeStateByState(_BUYER);
+          break;
+        default:
+          stateManager.changeStateByState("login");
+          break;  
+      }
     }
     else if (res.errorCode) {
       _L.validator.showErrors({

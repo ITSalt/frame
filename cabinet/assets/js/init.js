@@ -139,13 +139,14 @@ function imageLoader(idPreview, idFile, callBack, maxSize = 800) {
   };
 }
 
-function showNotify(message, type = "success", title = "Успешно") {
+function showNotify(message, pos = "top-right", type = "success", title = "Успешно") {
   $('.page-content-wrapper').pgNotification({
     style: 'circle',
     title: title,
     message: message,
     timeout: 3000,
     type: type,
+    position : pos,
     thumbnail: '<img width="40" height="40" style="display: inline-block;" src="/cabinet/assets/img/profiles/avatar2x.jpg" data-src="/cabinet/assets/img/profiles/avatar.jpg" data-src-retina="/cabinet/assets/img/profiles/avatar2x.jpg" alt="">'
   }).show();
 }
